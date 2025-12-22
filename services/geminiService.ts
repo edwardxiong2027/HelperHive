@@ -1,8 +1,14 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { AiPolishedResponse, ReadingAnalysis } from '../types';
 
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
+if (!apiKey) {
+  throw new Error('Missing VITE_GEMINI_API_KEY environment variable');
+}
+
 const getAiClient = () => {
-  return new GoogleGenAI({ apiKey: process.env.API_KEY });
+  return new GoogleGenAI({ apiKey });
 };
 
 export const polishHelpRequest = async (rawText: string): Promise<AiPolishedResponse> => {
