@@ -1,19 +1,13 @@
 import { getApp, getApps, initializeApp } from 'firebase/app';
 
-const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
-
-if (!apiKey) {
-  // Fail fast so we never initialize with an undefined key
-  throw new Error('Missing VITE_FIREBASE_API_KEY environment variable');
-}
-
+// Firebase configuration for mindmap-9f454 project (HelperHive app)
 const firebaseConfig = {
-  apiKey,
-  authDomain: 'helperhive-b03e7.firebaseapp.com',
-  projectId: 'helperhive-b03e7',
-  storageBucket: 'helperhive-b03e7.firebasestorage.app',
-  messagingSenderId: '102350131504',
-  appId: '1:102350131504:web:bf6985c0df6098134478f5'
+  apiKey: "AIzaSyCXEtq0ubgtXIbb7s_JzoWt8daNejKwuLQ",
+  authDomain: "mindmap-9f454.firebaseapp.com",
+  projectId: "mindmap-9f454",
+  storageBucket: "mindmap-9f454.firebasestorage.app",
+  messagingSenderId: "582191293462",
+  appId: "1:582191293462:web:3e9d046f37e79bf0538137"
 };
 
 // Initialize once and reuse across the app

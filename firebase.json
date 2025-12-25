@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "helperhive-202512",
     "public": "dist",
     "ignore": [
       "firebase.json",
