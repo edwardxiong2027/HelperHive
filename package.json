@@ -10,7 +10,7 @@
     "deploy": "npm run build && npx firebase deploy"
   },
   "dependencies": {
-    "@google/genai": "^1.33.0",
+    "openai": "^4.76.0",
     "firebase": "^12.7.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3"

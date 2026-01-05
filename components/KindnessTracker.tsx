@@ -1,17 +1,23 @@
-import React, { useState, useRef } from 'react';
-import { KindnessEntry } from '../types';
+import React, { useRef, useState } from 'react';
+import { KindnessEntry, UserProfile } from '../types';
 import { celebrateKindness } from '../services/geminiService';
 
 interface KindnessTrackerProps {
+  user: UserProfile;
   entries: KindnessEntry[];
-  setEntries: React.Dispatch<React.SetStateAction<KindnessEntry[]>>;
+  loading: boolean;
+  saving: boolean;
+  onCreateEntry: (payload: { action: string; aiResponse: string; imageUrl?: string | null }) => Promise<void>;
 }
 
-const KindnessTracker: React.FC<KindnessTrackerProps> = ({ entries, setEntries }) => {
+const KindnessTracker: React.FC<KindnessTrackerProps> = ({ user, entries, loading, saving, onCreateEntry }) => {
   const [inputAction, setInputAction] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isCelebrating, setIsCelebrating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const totalEntries = entries.length;
+  const lastAction = entries[0]?.action;
+  const signedInLabel = user.displayName || user.email || 'you';
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -29,21 +35,21 @@ const KindnessTracker: React.FC<KindnessTrackerProps> = ({ entries, setEntries }
     if (!inputAction.trim()) return;
 
     setIsCelebrating(true);
-    const aiMessage = await celebrateKindness(inputAction);
-    
-    const newEntry: KindnessEntry = {
-      id: Date.now().toString(),
-      action: inputAction,
-      aiResponse: aiMessage,
-      timestamp: Date.now(),
-      tags: [],
-      imageUrl: selectedImage || undefined,
-    };
+    try {
+      const aiMessage = await celebrateKindness(inputAction);
+      await onCreateEntry({
+        action: inputAction,
+        aiResponse: aiMessage,
+        imageUrl: selectedImage || null,
+      });
 
-    setEntries([newEntry, ...entries]);
-    setInputAction('');
-    setSelectedImage(null);
-    setIsCelebrating(false);
+      setInputAction('');
+      setSelectedImage(null);
+    } catch (error) {
+      console.error('Failed to log kindness', error);
+    } finally {
+      setIsCelebrating(false);
+    }
   };
 
   return (
@@ -51,6 +57,19 @@ const KindnessTracker: React.FC<KindnessTrackerProps> = ({ entries, setEntries }
       <div className="text-center py-2">
         <h2 className="text-2xl font-bold text-gray-900 font-display">Kindness Tracker</h2>
         <p className="text-gray-500 text-sm">Small acts change the world.</p>
+        <p className="text-xs text-gray-400 mt-1">Signed in as {signedInLabel}</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-white rounded-2xl shadow-card border border-gray-100 p-4 text-left">
+          <p className="text-[11px] uppercase text-gray-400 font-bold">Saved moments</p>
+          <p className="text-2xl font-display text-gray-900 mt-1">{totalEntries}</p>
+          <p className="text-[11px] text-gray-500">Stored in Firebase</p>
+        </div>
+        <div className="bg-gradient-to-r from-amber-100 to-orange-50 rounded-2xl shadow-card border border-amber-100 p-4">
+          <p className="text-[11px] uppercase text-amber-700 font-bold">Latest spark</p>
+          <p className="text-sm text-gray-800 mt-1 min-h-[32px]">{lastAction || "Log your first kindness to light this up!"}</p>
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl shadow-card border border-gray-100 overflow-hidden">
@@ -78,7 +97,7 @@ const KindnessTracker: React.FC<KindnessTrackerProps> = ({ entries, setEntries }
                     onChange={(e) => setInputAction(e.target.value)}
                     placeholder="I shared my notes with..."
                     className="w-full bg-transparent p-3 min-h-[50px] max-h-[120px] outline-none text-gray-800 placeholder:text-gray-400 resize-none text-sm"
-                    disabled={isCelebrating}
+                    disabled={isCelebrating || saving}
                 />
                 <div className="px-2 pb-2 flex justify-between items-center">
                     <button
@@ -86,7 +105,7 @@ const KindnessTracker: React.FC<KindnessTrackerProps> = ({ entries, setEntries }
                         onClick={() => fileInputRef.current?.click()}
                         className={`p-2 rounded-lg hover:bg-gray-200 text-gray-400 transition-colors ${selectedImage ? 'text-leaf-500 bg-leaf-50' : ''}`}
                         title="Add Photo"
-                        disabled={isCelebrating}
+                        disabled={isCelebrating || saving}
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                     </button>
@@ -96,7 +115,7 @@ const KindnessTracker: React.FC<KindnessTrackerProps> = ({ entries, setEntries }
              
              <button 
                 type="submit"
-                disabled={!inputAction.trim() || isCelebrating}
+                disabled={!inputAction.trim() || isCelebrating || saving}
                 className="bg-gray-900 hover:bg-black text-white rounded-xl w-12 h-12 flex items-center justify-center transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
              >
                 {isCelebrating ? (
@@ -110,7 +129,12 @@ const KindnessTracker: React.FC<KindnessTrackerProps> = ({ entries, setEntries }
       </div>
 
       <div className="space-y-4 overflow-y-auto pb-24 px-1 no-scrollbar">
-        {entries.length === 0 ? (
+        {loading ? (
+          <div className="text-center py-12 opacity-70">
+            <div className="w-10 h-10 border-4 border-gray-200 border-t-honey-400 rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-500 font-medium">Loading your kindness log...</p>
+          </div>
+        ) : entries.length === 0 ? (
           <div className="text-center py-12 opacity-40">
             <div className="text-5xl mb-4 grayscale opacity-50">🌱</div>
             <p className="text-gray-500 font-medium">Plant the first seed of kindness today!</p>

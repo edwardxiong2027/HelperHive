@@ -5,6 +5,8 @@ export interface HelpRequest {
   category: 'Physical' | 'Social' | 'School' | 'Community' | 'Other';
   status: 'Open' | 'Matched';
   author: string;
+  authorId?: string;
+  authorPhotoUrl?: string;
   emoji: string;
   createdAt: number;
   imageUrl?: string;
@@ -17,6 +19,7 @@ export interface KindnessEntry {
   timestamp: number;
   tags: string[];
   imageUrl?: string;
+  userId?: string;
 }
 
 export enum AppTab {
@@ -36,4 +39,32 @@ export interface ReadingAnalysis {
   summary: string;
   vocabulary: Array<{ word: string; definition: string }>;
   questions: string[];
+}
+
+export interface UserProfile {
+  uid: string;
+  displayName?: string | null;
+  email?: string | null;
+  photoURL?: string | null;
+}
+
+export interface NewHelpRequestInput {
+  originalText: string;
+  polishedText: string;
+  category: HelpRequest['category'];
+  emoji: string;
+  author: string;
+  authorId?: string;
+  authorPhotoUrl?: string | null;
+  imageUrl?: string | null;
+}
+
+export interface UpdateHelpRequestInput extends NewHelpRequestInput {
+  id: string;
+}
+
+export interface NewKindnessEntryInput {
+  action: string;
+  aiResponse: string;
+  imageUrl?: string | null;
 }

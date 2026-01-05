@@ -1,4 +1,6 @@
 import { getApp, getApps, initializeApp } from 'firebase/app';
+import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 
 // Firebase configuration using environment variables (never commit secrets)
 const firebaseConfig = {
@@ -12,5 +14,8 @@ const firebaseConfig = {
 
 // Initialize once and reuse across the app
 export const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
+export const auth = getAuth(firebaseApp);
+export const googleProvider = new GoogleAuthProvider();
+export const db = getFirestore(firebaseApp);
 
 export default firebaseApp;
